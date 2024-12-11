@@ -1,0 +1,230 @@
+#!/bin/bash
+
+# Arrays to hold user data
+declare -a STUDENT_ID
+declare -a STUDENT_NAME
+declare -a STUDENT_SEMESTER
+declare -a STUDENT_TUITION
+declare -a STUDENT_COURSES
+declare -a STUDENT_MENTOR
+declare -A STUDENT_MARKS
+
+declare -a FACULTY_ID
+declare -a FACULTY_NAME
+
+declare -a ADMIN_USER
+declare -a ADMIN_PASS
+
+# Main Menu
+main_menu() {
+    choice=$(zenity --list --title="Main Menu" --text="Select an option:" \
+        --column="Option" --column="Action" \
+        1 "Register" \
+        2 "Login as Admin" \
+        3 "Login as Faculty" \
+        4 "Login as Student" \
+        5 "Exit" \
+        --height=300)
+
+    case $choice in
+        1) register_user ;;
+        2) admin_login ;;
+        3) faculty_login ;;
+        4) student_login ;;
+        5) exit 0 ;;
+        *) zenity --error --text="Invalid choice!" ;;
+    esac
+    main_menu
+}
+
+# User Registration
+register_user() {
+    choice=$(zenity --list --title="Register" --text="Select an option:" \
+        --column="Option" --column="Action" \
+        1 "Register as Admin" \
+        2 "Register as Faculty" \
+        3 "Register as Student" \
+        --height=250)
+
+    case $choice in
+        1)
+            username=$(zenity --entry --title="Admin Registration" --text="Enter Admin Username:")
+            password=$(zenity --password --title="Admin Registration" --text="Enter Admin Password:")
+            ADMIN_USER+=("$username")
+            ADMIN_PASS+=("$password")
+            zenity --info --text="Admin registered successfully!"
+            ;;
+        2)
+            faculty_id=$(zenity --entry --title="Faculty Registration" --text="Enter Faculty ID:")
+            faculty_name=$(zenity --entry --title="Faculty Registration" --text="Enter Faculty Name:")
+            FACULTY_ID+=("$faculty_id")
+            FACULTY_NAME+=("$faculty_name")
+            zenity --info --text="Faculty registered successfully!"
+            ;;
+        3)
+            id=$(zenity --entry --title="Student Registration" --text="Enter Student ID:")
+            name=$(zenity --entry --title="Student Registration" --text="Enter Student Name:")
+            semester=$(zenity --entry --title="Student Registration" --text="Enter Current Semester (1-6):")
+            tuition=$(zenity --entry --title="Student Registration" --text="Enter Tuition Fee Per Semester:")
+            courses=$(zenity --entry --title="Student Registration" --text="Enter Registered Courses (e.g., CSE101(3), MAT102(3)):")
+            mentor=$(zenity --entry --title="Student Registration" --text="Enter Mentor Name:")
+
+            STUDENT_ID+=("$id")
+            STUDENT_NAME+=("$name")
+            STUDENT_SEMESTER+=("$semester")
+            STUDENT_TUITION+=("$tuition")
+            STUDENT_COURSES+=("$courses")
+            STUDENT_MENTOR+=("$mentor")
+            STUDENT_MARKS["$id"]="No Marks Assigned"
+            zenity --info --text="Student registered successfully!"
+            ;;
+        *)
+            zenity --error --text="Invalid choice!"
+            ;;
+    esac
+}
+
+# Admin Login
+admin_login() {
+    user=$(zenity --entry --title="Admin Login" --text="Enter Admin Username:")
+    pass=$(zenity --password --title="Admin Login" --text="Enter Admin Password:")
+
+    for i in "${!ADMIN_USER[@]}"; do
+        if [ "$user" == "${ADMIN_USER[$i]}" ] && [ "$pass" == "${ADMIN_PASS[$i]}" ]; then
+            zenity --info --text="Login successful!"
+            admin_menu
+            return
+        fi
+    done
+
+    zenity --error --text="Invalid credentials!"
+}
+
+# Admin Menu
+admin_menu() {
+    choice=$(zenity --list --title="Admin Menu" --text="Select an action:" \
+        --column="Option" --column="Action" \
+        1 "Add Student" \
+        2 "Update Student Data" \
+        3 "Delete Student" \
+        4 "View All Students" \
+        5 "Logout" \
+        --height=300)
+
+    case $choice in
+        1) add_student ;;
+        2) update_student ;;
+        3) delete_student ;;
+        4) view_all_students ;;
+        5) main_menu ;;
+        *) zenity --error --text="Invalid choice!" ;;
+    esac
+    admin_menu
+}
+
+# Add Student
+add_student() {
+    id=$(zenity --entry --title="Add Student" --text="Enter Student ID:")
+    name=$(zenity --entry --title="Add Student" --text="Enter Student Name:")
+    semester=$(zenity --entry --title="Add Student" --text="Enter Current Semester:")
+    tuition=$(zenity --entry --title="Add Student" --text="Enter Tuition Fee Per Semester:")
+    courses=$(zenity --entry --title="Add Student" --text="Enter Registered Courses (e.g., CSE101(3), MAT102(3)):")
+    mentor=$(zenity --entry --title="Add Student" --text="Enter Mentor Name:")
+
+    STUDENT_ID+=("$id")
+    STUDENT_NAME+=("$name")
+    STUDENT_SEMESTER+=("$semester")
+    STUDENT_TUITION+=("$tuition")
+    STUDENT_COURSES+=("$courses")
+    STUDENT_MENTOR+=("$mentor")
+    STUDENT_MARKS["$id"]="No Marks Assigned"
+    zenity --info --text="Student added successfully!"
+}
+
+# Faculty Login
+faculty_login() {
+    id=$(zenity --entry --title="Faculty Login" --text="Enter Faculty ID:")
+    for i in "${!FACULTY_ID[@]}"; do
+        if [ "${FACULTY_ID[$i]}" == "$id" ]; then
+            zenity --info --text="Login successful!"
+            faculty_menu
+            return
+        fi
+    done
+    zenity --error --text="Faculty ID not found!"
+}
+
+# Faculty Menu
+faculty_menu() {
+    choice=$(zenity --list --title="Faculty Menu" --text="Select an action:" \
+        --column="Option" --column="Action" \
+        1 "Update Student Marks" \
+        2 "Edit Registered Courses" \
+        3 "Logout" \
+        --height=250)
+
+    case $choice in
+        1) update_marks ;;
+        2) edit_courses ;;
+        3) main_menu ;;
+        *) zenity --error --text="Invalid choice!" ;;
+    esac
+}
+
+# Update Marks
+update_marks() {
+    id=$(zenity --entry --title="Update Marks" --text="Enter Student ID:")
+    for i in "${!STUDENT_ID[@]}"; do
+        if [ "${STUDENT_ID[$i]}" == "$id" ]; then
+            marks=$(zenity --entry --title="Update Marks" --text="Enter Updated Marks (e.g., CSE101:90, MAT102:85):")
+            STUDENT_MARKS["$id"]="$marks"
+            zenity --info --text="Marks updated successfully!"
+            return
+        fi
+    done
+    zenity --error --text="Student ID not found!"
+}
+
+# Edit Courses
+edit_courses() {
+    id=$(zenity --entry --title="Edit Courses" --text="Enter Student ID:")
+    for i in "${!STUDENT_ID[@]}"; do
+        if [ "${STUDENT_ID[$i]}" == "$id" ]; then
+            courses=$(zenity --entry --title="Edit Courses" --text="Enter Updated Courses (e.g., CSE101(3), MAT102(3)):")
+            STUDENT_COURSES[$i]="$courses"
+            zenity --info --text="Courses updated successfully!"
+            return
+        fi
+    done
+    zenity --error --text="Student ID not found!"
+}
+
+# Student Login
+student_login() {
+    id=$(zenity --entry --title="Student Login" --text="Enter Student ID:")
+    for i in "${!STUDENT_ID[@]}"; do
+        if [ "${STUDENT_ID[$i]}" == "$id" ]; then
+            zenity --info --text="Welcome, ${STUDENT_NAME[$i]}!\nMarks: ${STUDENT_MARKS[$id]}"
+            return
+        fi
+    done
+    zenity --error --text="Student ID not found!"
+}
+
+# View All Students
+view_all_students() {
+    if [ ${#STUDENT_ID[@]} -eq 0 ]; then
+        zenity --info --text="No students registered yet!"
+        return
+    fi
+
+    data=""
+    for i in "${!STUDENT_ID[@]}"; do
+        data+="ID: ${STUDENT_ID[$i]}, Name: ${STUDENT_NAME[$i]}, Semester: ${STUDENT_SEMESTER[$i]}, Mentor: ${STUDENT_MENTOR[$i]}\n"
+    done
+
+    zenity --info --text="$data"
+}
+
+# Start the script
+main_menu
